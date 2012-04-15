@@ -4,7 +4,7 @@ director_uuid: BOSH_DIRECTOR_UUID
 
 release:
   name: wordpress
-  version: 3
+  version: 1
 
 compilation:
   workers: 4
@@ -25,25 +25,25 @@ update:
 networks:
   - name: default
     type: dynamic
-    ip: 23.23.10.10
+    ip: NGINX_ELASTICIP
     cloud_properties:
       security_groups:
       - default
   - name: nginx
     type: vip
-    ip: 23.23.10.10
+    ip: NGINX_ELASTICIP
     cloud_properties:
       security_groups:
       - default
   - name: wordpress
     type: vip
-    ip: 23.23.20.10
+    ip: WORDPRESS_ELASTICIP
     cloud_properties:
       security_groups:
       - default
   - name: mysql
     type: vip
-    ip: 23.23.30.10
+    ip: MYSQL_ELASTICIP
     cloud_properties:
       security_groups:
       - default
@@ -69,7 +69,7 @@ jobs:
     networks:
     - name: default
       static_ips:
-        - 23.23.10.10
+        - NGINX_ELASTICIP
 
   - name: wordpress
     template: wordpress
@@ -78,7 +78,7 @@ jobs:
     networks:
     - name: default
       static_ips:
-      - 23.23.20.10
+      - WORDPRESS_ELASTICIP
 
   - name: mysql
     template: mysql
@@ -88,7 +88,7 @@ jobs:
     networks:
     - name: default
       static_ips:
-      - 23.23.30.10
+      - MYSQL_ELASTICIP
 
 properties:
 
@@ -99,8 +99,8 @@ properties:
     admin: foo@bar.com
     port: 8008
     servers:
-      - 23.23.20.10
-    servername: ec2-23-23-10-10.compute-1.amazonaws.com
+      - WORDPRESS_ELASTICIP
+    servername: WORDPRESS_SERVERNAME
     db:
       name: wp
       user: wordpress
@@ -115,7 +115,7 @@ properties:
     nonce_salt: random key
 
   mysql:
-    address: 23.23.30.10
+    address: MYSQL_ELASTICIP
     port: 3306
     password: rootpass
 

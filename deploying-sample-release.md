@@ -84,7 +84,7 @@ cd bosh-sample-release
 cp /tmp/microbosh/bosh-getting-started-on-aws/examples/wordpress/deployment-manifest-initial.yml wordpress-aws.yml
 ```
 
-If you look at the bosh-sample-release folder you'll see a full BOSH release for an environment. We've also added an AWS-specific manifest for deploying our environment.
+If you look at the bosh-sample-release folder you'll see a full BOSH release for an environment. We've also added an AWS-specific manifest for deploying our environment (wordpress-aws.yml).
 
 You'll need to change the `ACCESS_KEY` and `SECRET_ACCESS_KEY` values for your AWS account. This can be a different AWS account from the one used to create your BOSH if you like.
 
@@ -92,7 +92,9 @@ You'll also change `BOSH_AWS_REGISTRY_DNS_NAME` to the domain name of your BOSH.
 
 You'll also change `BOSH_DIRECTOR_UUID`
 
-You'll also change the 3 elastic IP addresses to the ones that you created.
+You'll also change the 3 elastic IP addresses (`NGINX_ELASTICIP`, `WORDPRESS_ELASTICIP`, `MYSQL_ELASTICIP`) to the ones that you created.
+
+You'll also change the `WORDPRESS_SERVERNAME` to the public DNS of the elastic IP associated to nginx (ec2-23-23-10-10.compute-1.amazonaws.com in this example).
 
 If you lost your post-it note, get them again with fog:
 
@@ -118,6 +120,12 @@ You can look at this file and see how it explicitly expresses which packages and
 
 ```
 cat dev_releases/wordpress-1.yml
+```
+
+Confirm that in the manifest for deploying our environment (wordpress-aws.yml) the name is wordpress and version matches the version that was displayed in your terminal (if this is your first release, this will be version 1).
+
+```
+cat wordpress-aws.yml
 ```
 
 Now upload this specific v1 release of "wordpress" to your BOSH. This will upload a big release.tgz to your BOSH.

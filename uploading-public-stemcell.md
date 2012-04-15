@@ -1,8 +1,8 @@
 # Getting a public stemcell and uploading it
 
-Stemcells are large. 400Mb or more. They are the base image for new VMs. That is, on AWS they are the AMI. 
+A Stemcell is a VM template with an embedded bosh agent. They are the base image for new VMs. That is, on AWS they are the AMI.
 
-So, run all the following commands from within your BOSH VM where it will be much faster to download and upload the stemcell to your BOSH.
+Stemcells are large. 400Mb or more. So, run all the following commands from within your BOSH VM where it will be much faster to download and upload the stemcell to your BOSH.
 
 ```
 $ ssh ubuntu@ec2-10-2-3-4.compute-1.amazonaws.com
