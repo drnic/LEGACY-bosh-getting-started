@@ -30,19 +30,16 @@ networks:
       - default
   - name: nginx
     type: vip
-    ip: NGINX_ELASTICIP
     cloud_properties:
       security_groups:
       - default
   - name: wordpress
     type: vip
-    ip: WORDPRESS_ELASTICIP
     cloud_properties:
       security_groups:
       - default
   - name: mysql
     type: vip
-    ip: MYSQL_ELASTICIP
     cloud_properties:
       security_groups:
       - default
@@ -66,7 +63,7 @@ jobs:
     instances: 1
     resource_pool: common
     networks:
-    - name: default
+    - name: nginx
       static_ips:
       - NGINX_ELASTICIP
 
@@ -75,7 +72,7 @@ jobs:
     instances: 1
     resource_pool: common
     networks:
-    - name: default
+    - name: wordpress
       static_ips:
       - WORDPRESS_ELASTICIP
 
@@ -85,7 +82,7 @@ jobs:
     resource_pool: common
     persistent_disk: 16384
     networks:
-    - name: default
+    - name: mysql
       static_ips:
       - MYSQL_ELASTICIP
 
