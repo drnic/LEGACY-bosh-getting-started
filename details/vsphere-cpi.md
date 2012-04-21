@@ -4,7 +4,7 @@ The vSphere CPI is used to deploy releases to VMware vSphere clusters. In the de
 
 Below is a detailed outline of a `cloud` section of a deployment manifest
 
-`
+```
 cloud:
   plugin: vsphere
   properties:
@@ -27,7 +27,7 @@ cloud:
             clusters:
               - [Name of cluster in above datacenter (Ex. CLUSTER01)]
 				resource_pool: [Optional: Resource pool to store VMs]
-`
+```
 
 
 
