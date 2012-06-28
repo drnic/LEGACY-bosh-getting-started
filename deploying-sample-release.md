@@ -95,11 +95,9 @@ cp ~/.microbosh/bosh-getting-started/examples/wordpress/deployment-manifest-init
 
 If you look at the bosh-sample-release folder you'll see a full BOSH release for an environment. We've also added an AWS-specific manifest for deploying our environment (wordpress-aws.yml).
 
-You'll need to change the `ACCESS_KEY` and `SECRET_ACCESS_KEY` values for your AWS account. This can be a different AWS account from the one used to create your BOSH if you like.
+For deploying BOSH, you'll need to change the `ACCESS_KEY` and `SECRET_ACCESS_KEY` values for your AWS account. This can be a different AWS account from the one used to create your BOSH if you like. You'll also change `BOSH_AWS_REGISTRY_DNS_NAME` to the domain name of your BOSH. In our tutorial this was `ec2-10-2-3-4.compute-1.amazonaws.com`.
 
-You'll also change `BOSH_AWS_REGISTRY_DNS_NAME` to the domain name of your BOSH. In our tutorial this was `ec2-10-2-3-4.compute-1.amazonaws.com`.
-
-You'll also change `BOSH_DIRECTOR_UUID` with the value from running `bosh status`, and using the `UUID` value.
+For deploying wordpress, you'll merely start wth changing `BOSH_DIRECTOR_UUID` with the value from running `bosh status`, and using the `UUID` value.
 
 FUTURE - You'll also change the 3 elastic IP addresses (`NGINX_ELASTICIP`, `WORDPRESS_ELASTICIP`, `MYSQL_ELASTICIP`) to the ones that you created.
 
