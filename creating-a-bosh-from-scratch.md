@@ -139,7 +139,7 @@ chmod 777 /var/vcap/deploy
 #check if en_US.UTF-8 is indeed available in your system
 locale -a
 #if not add it, otherwise pgresql will refuse to start complaining about invalid lc_message with "en_US.UTF-8"
-sudo locale-gen en_US.UTF-8 
+locale-gen en_US.UTF-8 
 exit
 ```
 
