@@ -135,8 +135,12 @@ cd bosh/release/template/instance
 ./prepare_instance.sh
 
 chmod 777 /var/vcap/deploy
+```
 
-#check if en_US.UTF-8 is indeed available in your system
+Postgresql db is configured to run with en_US.UTF-8 locale that needs to be present in your EC2 instance. Add it if missing.
+
+```
+#check if en_US.UTF-8 locale is indeed available in your system
 locale -a
 #if not add it, otherwise pgresql will refuse to start complaining about invalid lc_message with "en_US.UTF-8"
 locale-gen en_US.UTF-8 
