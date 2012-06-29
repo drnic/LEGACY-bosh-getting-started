@@ -167,6 +167,7 @@ vim config.yml
 * replace all `PUBLIC_DNS_NAME` with your fog-created VM's `server.dns_name` (e.g. ec2-10-2-3-4.compute-1.amazonaws.com)
 * replace `ACCESS_KEY_ID` with your AWS access key id
 * replace `SECRET_ACCESS_KEY` with your AWS secret access key
+* replace value of ec2_endpoint with the EC2 endpoint for the region you use
 
 In VIM, you can "replace all" by typing:
 
