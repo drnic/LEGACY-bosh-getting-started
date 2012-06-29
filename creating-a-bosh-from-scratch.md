@@ -4,7 +4,7 @@ Follow along with [this 16 min screencast](https://vimeo.com/40484383).
 
 * Create a VM
 * Run prepare_instance.sh inside instance
-* Use chef_deployer to setup the VM as BOSH
+* From your dev box, use chef_deployer to setup the VM as BOSH over ssh
 
 ## Setup
 
@@ -62,6 +62,8 @@ when 'us-west-1'
 when 'us-west-2'
   'ami-e0ec60d0'
 ```
+
+Note: as of June 2012, VPC is not yet supported by bosh (see [mail exchanges](https://groups.google.com/a/cloudfoundry.org/group/bosh-dev/browse_thread/thread/30ca9b70b23fa4e7) ), so best to stick with an EC2 instance for now.
 
 The rest of the BOSH creation tutorial assumes you used a fog-provided AMI with a user account of `ubuntu`. If you do something different and have a different end experience, please let me know in the Issues.
 
@@ -133,11 +135,22 @@ cd bosh/release/template/instance
 ./prepare_instance.sh
 
 chmod 777 /var/vcap/deploy
+```
 
+Postgresql db is configured to run with en_US.UTF-8 locale that needs to be present in your EC2 instance. Add it if missing.
+
+```
+#check if en_US.UTF-8 locale is indeed available in your system
+locale -a
+#if not add it, otherwise pgresql will refuse to start complaining about invalid lc_message with "en_US.UTF-8"
+locale-gen en_US.UTF-8 
 exit
 ```
 
 **From another terminal on your local machine:**
+
+We'll now configure over SSH the VM we've prepared using chef.
+Your local machine should have [github ssh certificates installed](https://help.github.com/articles/generating-ssh-keys) and ruby, rubygems installed (e.g. reuse prepare_instance.sh commands)
 
 Make a copy of the `examples/microbosh` folder contents and add your AWS credentials as appropriate into `config.yml`:
 
