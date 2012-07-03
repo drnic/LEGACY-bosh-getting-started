@@ -104,6 +104,11 @@ These commands below can take a long time. If it terminates early, re-run it unt
 
 Alternately, run it inside screen or tmux so you don't have to fear early termination:
 
+Update the system with security updates and patches (e.g. avoid bug in ubuntu prevents instance reboot)
+```
+sudo apt-get dist-upgrade
+```
+
 ```
 $ ssh ubuntu@ec2-10-2-3-4.compute-1.amazonaws.com
 sudo su -
