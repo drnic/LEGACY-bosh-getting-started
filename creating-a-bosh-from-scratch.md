@@ -37,7 +37,7 @@ From Wesley's [fog blog post](http://www.engineyard.com/blog/2011/spinning-up-cl
 $ fog
   Welcome to fog interactive!
   :default provides AWS and VirtualBox
-connection = Fog::Compute.new({ :provider => 'AWS', :region => 'us-east-1' })
+connection = Fog::Compute.new({ :provider => 'AWS', :region => 'ap-southeast-1' })
 server = connection.servers.bootstrap({
   :public_key_path => '~/.ssh/id_rsa.pub',
   :private_key_path => '~/.ssh/id_rsa',
@@ -123,8 +123,7 @@ deb http://us-east-1.ec2.archive.ubuntu.com/ubuntu/ lucid multiverse
 Back in the remote terminal (you can copy and paste each chunk):
 
 ```
-apt-get update
-apt-get install git-core -y
+
 
 mkdir /var/vcap/bootstrap
 cd /var/vcap/bootstrap
@@ -133,6 +132,18 @@ cd bosh/release/template/instance
 ./prepare_instance.sh
 
 chmod 777 /var/vcap/deploy
+# also need to make the deploy directory owned by the ubuntu user so we can
+# rsync the cookbooks
+mkdir /var/vcap/deploy/cookbooks
+chown ubuntu:ubuntu -R /var/vcap/deploy/cookbooks
+
+mkdir -p /var/vcap/deploy/repos/bosh
+cd /var/vcap/deploy/repos/bosh
+git clone https://github.com/cloudfoundry/bosh.git
+chown ubuntu:ubuntu -R /var/vcap/deploy/repos
+
+mkdir /var/vcap/deploy/chef
+chown ubuntu:ubuntu -R /var/vcap/deploy/chef
 
 exit
 ```
@@ -154,6 +165,7 @@ vim config.yml
 * replace all `PUBLIC_DNS_NAME` with your fog-created VM's `server.dns_name` (e.g. ec2-10-2-3-4.compute-1.amazonaws.com)
 * replace `ACCESS_KEY_ID` with your AWS access key id
 * replace `SECRET_ACCESS_KEY` with your AWS secret access key
+* replace `EC2_REGION` with the actual region, for example, `ap-southeast-1` or `us-east-1`.
 
 In VIM, you can "replace all" by typing:
 
@@ -167,16 +179,29 @@ Get the chef_deployer & cookbooks (all from the same [bosh](https://github.com/c
 
 ```
 cd ~/.microbosh
-git clone https://github.com/cloudfoundry/bosh.git
-cd bosh/chef_deployer
+git clone https://github.com/cloudfoundry/bosh.git bosh_deployed
+cd bosh_deployed/chef_deployer
 bundle
 cd ../release/
+```
+
+Configure the github repository of bosh:
+```
+vim config/repos.yml
+# replace git@github.com:cloudfoundry/bosh.git
+# by https://github.com/cloudfoundry/bosh.git
 ```
 
 Now we can run chef to install BOSH:
 
 ```
 ruby ../chef_deployer/bin/chef_deployer deploy ~/.microbosh
+...
+it asks:
+    default password (will be tried for all future connections)?
+press enter
+...
+
 ...lots of chef...
 ```
 
