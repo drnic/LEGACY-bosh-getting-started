@@ -23,7 +23,31 @@ You want the latest public AWS stemcell. Download it from the public server and 
 $ cd /tmp
 $ bosh download public stemcell bosh-stemcell-aws-0.5.1.tgz
 bosh-stemcell:  98% |ooooooooooooooooooooooooooooooo  | 384.0MB   1.7MB/s ETA:  00:00:03
+```
 
+If you're not running on the default us-east-1a zone, you may need to update the kernel id to one that is available in your region (preferably matching pv-grub-hd0_1.02-amd64.gz.manifest.xml which is the old 1.02 amd 64 bit kernel). Untar bosh-stemcell-aws-0.5.1.tgz and edit the stemcell.MF (see tips from Richard Lennox https://groups.google.com/a/cloudfoundry.org/forum/?fromgroups#!topic/bosh-users/5Tqw9nK9LtU)
+
+```
+mkdir bosh-stemcell-aws-0.5.1
+cd bosh-stemcell-aws-0.5.1
+tar xvfz ../bosh-stemcell-aws-0.5.1.tgz
+vim stemcell.MF
+#edit kernel_id
+```
+
+add the kernel_id: "aki-fe1354ac" (with the kernel id for your region matching amd64, see http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/UserProvidedkernels.html and http://cloud-images.ubuntu.com/releases/oneiric/release/published-ec2-release.txt.orig )
+
+```
+tar cvfz ../bosh-stemcell-aws-0.5.1.tgz.patched image stemcell*
+cd ..
+mv bosh-stemcell-aws-0.5.1.tgz bosh-stemcell-aws-0.5.1.tgz.orig
+mv bosh-stemcell-aws-0.5.1.tgz.patched bosh-stemcell-aws-0.5.1.tgz
+```
+
+
+
+
+```
 $ bosh upload stemcell bosh-stemcell-aws-0.5.1.tgz
 Verifying stemcell...
 File exists and readable                                     OK

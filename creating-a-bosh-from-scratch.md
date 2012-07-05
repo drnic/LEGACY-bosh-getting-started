@@ -228,5 +228,37 @@ No releases
 No deployments
 ```
 
+As of july 6th 2012, there are two patches that are not yet merged into the bosh repo that you may want to apply, especially if you're not running your bosh instance on the default us-west-1c availability zone.
+
+First, manually get a patch for http://reviews.cloudfoundry.org/#/c/6507/
+
+```
+diff /var/vcap/bootstrap/bosh/aws_cpi/lib/cloud/aws/helpers.rb /var/vcap/bootstrap/bosh/aws_cpi/lib/cloud/aws/helpers.rb.orig
+23d22
+<       failures = 0
+38,50c37
+<         begin
+<           state = resource.send(state_method)
+<         rescue AWS::EC2::Errors::InvalidAMIID::NotFound => e
+<           # ugly workaround for an AWS issue:
+<           # sometimes when we upload a stemcell and proceed to create a VM from
+<           # it, AWS reports that the AMI is missing, but checking the console
+<           # it is there, so by retrying we catch that race condition
+<           raise e if failures > 3
+<           failures =+ 1
+<           @logger.error("AMI not found: #{desc}")
+<           sleep(1)
+<           next
+<         end
+---
+>         state = resource.send(state_method)
+74d60
+<
+```
+
+then modify the /var/vcap/deploy/bosh/aws_registry/shared/config/aws_registry.yml config file to add the "ec2_endpoint" property to the aws hash.
+
+
+
 Good job.
 

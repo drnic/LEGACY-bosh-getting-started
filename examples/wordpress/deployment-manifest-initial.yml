@@ -11,6 +11,8 @@ compilation:
   network: default
   cloud_properties:
     instance_type: m1.small
+    availability_zone: 
+    key_name: 
 
 # this section describes how updates are handled
 update:
@@ -51,7 +53,7 @@ resource_pools:
       version: 0.5.1
     cloud_properties:
       instance_type: m1.small
-      availability_zone:
+      availability_zone: 
       key_name: 
 
 jobs:
@@ -61,7 +63,6 @@ jobs:
     resource_pool: common
     networks:
     - name: nginx_network
-      default: [dns, gateway]
       static_ips:
       - NGINX_ELASTICIP
   - name: wordpress
@@ -70,7 +71,6 @@ jobs:
     resource_pool: common
     networks:
     - name: wordpress_network
-      default: [dns, gateway]
       static_ips:
       - WORDPRESS_ELASTICIP
   - name: mysql
@@ -80,7 +80,6 @@ jobs:
     persistent_disk: 16384
     networks:
     - name: mysql_network
-      default: [dns, gateway]
       static_ips:
       - MYSQL_ELASTICIP
 

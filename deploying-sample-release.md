@@ -97,7 +97,7 @@ If you look at the bosh-sample-release folder you'll see a full BOSH release for
 
 For deploying BOSH, you'll need to change the `ACCESS_KEY` and `SECRET_ACCESS_KEY` values for your AWS account. This can be a different AWS account from the one used to create your BOSH if you like. You'll also change `BOSH_AWS_REGISTRY_DNS_NAME` to the domain name of your BOSH. In our tutorial this was `ec2-10-2-3-4.compute-1.amazonaws.com`.
 
-For deploying wordpress, you'll merely start wth changing `BOSH_DIRECTOR_UUID` with the value from running `bosh status`, and using the `UUID` value.
+For deploying wordpress, you'll merely start wth changing `BOSH_DIRECTOR_UUID` with the value from running `bosh status`, and using the `UUID` value. If you're not running on the default availability zone (us-east-1a) , then specify the "availability_zone" property in the common resource pool, as well as in the compilation section. For manually connecting to the instances, you may want to specify the "key_name" property to one of your EC2 key pairs.
 
 FUTURE - You'll also change the 3 elastic IP addresses (`NGINX_ELASTICIP`, `WORDPRESS_ELASTICIP`, `MYSQL_ELASTICIP`) to the ones that you created.
 
@@ -114,13 +114,19 @@ connection.addresses.to_a[-3..-1].map(&:public_ip)
 
 ## Creating the release within BOSH
 
+Lets move our draft wordpress.yml into the release template, commit it into git (so that it gets archived with other parts of the release, such as source code)
+
 ```
+cd ~/.bosh_deployments/wordpress/bosh-sample-release
+cp ../wordpress-aws.yml wordpress.yml
+git commit -a
+
 $ bosh create release
 # name it "wordpress"
 ...
 
 Release version: 1
-Release manifest: /private/tmp/microbosh/bosh-sample-release/dev_releases/wordpress-1.yml
+Release manifest: ~/.bosh_deployments/wordpress/bosh-sample-release/dev_releases/wordpress-1.1-dev.yml
 ```
 
 You can look at this file and see how it explicitly expresses which packages and jobs will be used. You'll see that a total of 6 packages are installed and 3 jobs will be managed (nginx, wordpress and mysql).
@@ -158,8 +164,8 @@ By default, it boots a single VM per package to ensure a clean environment. On A
 Now tell the BOSH CLI which deployment we care about using `bosh deployment MANIFEST_FILE`. This is akin to `bosh target DIRECTOR` which tells BOSH CLI which director to focus on. BOSH CLI is optimized for your workflow - you'll be working on a single deployment/release on a single BOSH director.
 
 ```
-$ bosh deployment wordpress-aws.yml
-Deployment set to '/private/tmp/microbosh/bosh-sample-release/wordpress-aws.yml'
+$ bosh deployment ../wordpress-aws.yml
+Deployment set to '/private/tmp/microbosh/wordpress/bosh-sample-release/wordpress-aws.yml'
 $ bosh deploy
 Getting deployment properties from director...
 Unable to get properties list from director, trying without it...
