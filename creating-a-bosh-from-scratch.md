@@ -42,6 +42,7 @@ server = connection.servers.bootstrap({
   :public_key_path => '~/.ssh/id_rsa.pub',
   :private_key_path => '~/.ssh/id_rsa',
   :flavor_id => 'm1.large', # 64 bit, normal large
+  :default_security_groups => ['default'],
   :username => 'ubuntu'
 })
 ```
