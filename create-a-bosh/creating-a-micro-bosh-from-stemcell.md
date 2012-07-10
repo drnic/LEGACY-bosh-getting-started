@@ -226,6 +226,7 @@ resources:
   cloud_properties:
     instance_type: m1.small
     root_device_name: /dev/sda1
+    availability_zone: us-east-1a
 
 cloud:
   plugin: aws
@@ -253,6 +254,15 @@ WARNING! Your target has been changed to `http://1.2.3.4:25555'!
 Deployment set to '/var/vcap/deployments/microbosh-aws-us-east-1/micro_bosh.yml'
 ```
 
+
+## Method 1: Deploy an AMI
+
+On us-east-1 a public AMI is published for the micro-bosh-stemcell-0.1.0
+On other regions it is required to download the stemcell and publish the AMI.
+```
+$ bosh micro deploy ami-0743ef6e
+```
+
 To run the `bosh micro deployment microbosh-aws-us-east-1` command you must be in a folder that itself contains a folder `microbosh-aws-us-east-1` that contains `micro-bosh.yml`. In our tutorial, we are in `/var/vcap/deployments` which contains `/var/vcap/deployments/microbosh-aws-us-east-1/micro-bosh.yml`.
 
 Unlike [deploying Micro BOSH using a public AMI](creating-a-micro-bosh-from-ami.md#deployment), when deploying with a generic stemcell we must explicitly download the stemcell to the Inception VM and use it. 
@@ -265,7 +275,7 @@ bosh public stemcells
 bosh download public stemcell micro-bosh-stemcell-0.1.0.tgz
 bosh micro deploy micro-bosh-stemcell-0.1.0.tgz
 ```
-
+NOTE: no need to specify the aki in the stemcell.MF of the tarballed stemcell.
 NOTE: You want one called "micro-bosh-stemcell..." rather than a base stemcell with "aws" in its name.
 
 

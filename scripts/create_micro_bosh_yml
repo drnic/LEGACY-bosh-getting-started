@@ -24,15 +24,30 @@ def salted_password(password)
   `mkpasswd -m sha-512 '#{password}'`.strip
 end
 
-def aws_config_yml(name, access_key, secret_key, ipaddress, salted_password, options={})
+def aws_config_yml(name, access_key, secret_key, ipaddress, salted_password, region, key_name, options={})
 
-  region         = options[:region] || 'us-east-1'
-  key_name       = options[:key_name] || 'ec2'
-  kernel_id      = options[:kernel_id] || 'aki-b4aa75dd'
+  region            = options[:region] || region
+  availability_zone = options[:availability_zone] || "#{region}a"
+  kernel_id         = options[:kernel_id]
   image_id       = options[:image_id] || 'ami-0743ef6e' # TODO not currently used in micro_bosh.yml
   stemcell_disk  = options[:stemcell_disk] || 4096
-  security_group = options[:security_group] || 'default'
+  security_group = options[:security_group] || 'default'             
   instance_type  = options[:instance_type] || 'm1.small'
+  unless kernel_id
+    kernel_id = case region
+    when 'ap-northeast-1' then 'aki-d409a2d5'
+    when 'ap-southeast-1' then 'aki-11d5aa43'
+    when 'eu-west-1' then 'aki-4feec43b'
+    when 'sa-east-1' then 'aki-d63ce3cb'
+    when 'us-east-1' then 'aki-b4aa75dd' # or should it be aki-427d952b ?
+    when 'us-west-1' then 'aki-9ba0f1de'
+    when 'us-west-2' then 'aki-ace26f9c'
+    else raise "Unknown aws region #{region}"
+    end
+  end
+  stemcell_disk     = options[:stemcell_disk] || 4096
+  security_group    = options[:security_group] || 'default'
+  instance_type     = options[:instance_type] || 'm1.small'
   <<-YAML
 ---
 name: #{name}
@@ -52,6 +67,7 @@ resources:
   cloud_properties:
     instance_type: #{instance_type}
     root_device_name: /dev/sda1
+    availability_zone: #{availability_zone}
 
 cloud:
   plugin: aws
@@ -72,7 +88,7 @@ YAML
 end
 
 salty = salted_password(password)
-yml = aws_config_yml(name, access_key, secret_key, ipaddress, salty, options={})
+yml = aws_config_yml(name, access_key, secret_key, ipaddress, salty, region, keypair_name, options={})
 
 micro_bosh_yml = File.join(name, "micro_bosh.yml")
 FileUtils.mkdir_p(name)
