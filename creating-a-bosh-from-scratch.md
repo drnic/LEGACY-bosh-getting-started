@@ -45,6 +45,23 @@ server = connection.servers.bootstrap({
   :default_security_groups => ['default'],
   :username => 'ubuntu'
 })
+server = connection.servers.bootstrap({
+  :username => 'ubuntu',
+  :image_id => 'ami-0baf7662',
+  :groups => ['bosh'],
+  :flavor_id => "m1.large",
+  :bits => 64,
+  :public_key_path => '~/.ssh/id_rsa.pub',
+  :private_key_path => '~/.ssh/id_rsa',
+  :key_name => 'fog_default',
+  :availability_zone => 'us-east-1c',
+  :root_device => '/dev/sda1',
+  :block_device_mapping => [{
+            'DeviceName' => '/dev/sda1',
+            'Ebs.VolumeSize' => '20',
+            'Ebs.DeleteOnTermination' => true
+          }]
+})
 ```
 
 **Not using fog?** Here are a selection of AMIs to use that are [used by the fog](https://github.com/fog/fog/blob/master/lib/fog/aws/models/compute/server.rb#L55-66) example above:
