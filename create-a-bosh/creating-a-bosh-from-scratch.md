@@ -43,28 +43,13 @@ connection = Fog::Compute.new({ :provider => 'AWS', :region => 'us-east-1' })
 server = connection.servers.bootstrap({
   :public_key_path => '~/.ssh/id_rsa.pub',
   :private_key_path => '~/.ssh/id_rsa',
-  :flavor_id => 'm1.medium', # 64 bit, normal medium
+  :flavor_id => 'm1.small',
   :bits => 64,
   :username => 'ubuntu'
 })
 ```
 
-**Not using fog?** Here are a selection of AMIs to use that are [used by the fog](https://github.com/fog/fog/blob/master/lib/fog/aws/models/compute/server.rb#L55-66) example above:
-
-```ruby
-when 'ap-northeast-1'
-  'ami-5e0fa45f'
-when 'ap-southeast-1'
-  'ami-f092eca2'
-when 'eu-west-1'
-  'ami-3d1f2b49'
-when 'us-east-1'
-  'ami-3202f25b'
-when 'us-west-1'
-  'ami-f5bfefb0'
-when 'us-west-2'
-  'ami-e0ec60d0'
-```
+[Not using fog?](#not-using-fog)
 
 The rest of the BOSH creation tutorial assumes you used a fog-provided AMI with a user account of `ubuntu`. If you do something different and have a different end experience, please let me know in the Issues.
 
@@ -100,89 +85,39 @@ In the AWS console it will look like:
 
 ![security groups](https://img.skitch.com/20120414-m9g6ndg3gfjs7kdqhbp2y9a6y.png)
 
-## Install BOSH
+## Prepare for BOSH
 
-These commands below can take a long time. If it terminates early, re-run it until completion.
-
-Alternately, run it inside screen or tmux so you don't have to fear early termination:
+Before installing, configuring and running BOSH within our Ubuntu VM, we need to install some prerequisites.
 
 ```
 $ ssh ubuntu@ec2-10-2-3-4.compute-1.amazonaws.com
 sudo su -
-groupadd vcap 
-useradd vcap -m -g vcap
 
-mkdir -p /var/vcap/
-cp /home/ubuntu/.ssh/authorized_keys /var/vcap/
-
-vim /etc/apt/sources.list
+export ORIGUSER=ubuntu
+curl https://raw.github.com/drnic/bosh-getting-started/master/scripts/prepare_chefbosh.sh | bash
 ```
 
-Add the following line. **If you're in a different AWS region, change the URL prefix.**
+## Install BOSH
+
+We will convert the raw Ubuntu VM into a BOSH VM using Chef recipes within the bosh [release](https://github.com/cloudfoundry/bosh/tree/master/release) folder. There is a helper CLI for running chef called [chef_deployer](https://github.com/cloudfoundry/bosh/tree/master/chef_deployer).
+
+Run the following on your local machine. It only creates/modifies a `~/.chefbosh` folder and its contents.
+
+The `prepare_chef_deployer` script creates a `~/.chefbosh/bosh-aws-us-east-1` folder and a `~/.chefbosh/bosh-aws-us-east-1/config.yml` configuration file. The latter is used by bosh's `chef_deployer` CLI to locate and setup the BOSH VM.
 
 ```
-deb http://us-east-1.ec2.archive.ubuntu.com/ubuntu/ lucid multiverse
+curl https://raw.github.com/drnic/bosh-getting-started/master/scripts/prepare_chef_deployer > /tmp/prepare_chef_deployer
+chmod 755 /tmp/prepare_chef_deployer
+export BOSH_GETTING_STARTED='git://github.com/drnic/bosh-getting-started.git -b chefbosh'
+export BOSH_PATCH='ssh://$(whoami)@reviews.cloudfoundry.org:29418/bosh refs/changes/35/6935/1'
+/tmp/prepare_chef_deployer bosh-aws-us-east-1 aws ACCESS_KEY SECRET_KEY us-east-1 IP_ADDRESS PASSWORD
 ```
 
-Back in the remote terminal (you can copy and paste each chunk):
+TODO - remove the `BOSH_PATCH`
 
-```
-apt-get update
-apt-get install git-core -y
+`IP_ADDRESS` can also be the public DNS for the VM. In this tutorial it is `ec2-10-2-3-4.compute-1.amazonaws.com`.
 
-mkdir /var/vcap/bootstrap
-cd /var/vcap/bootstrap
-git clone https://github.com/cloudfoundry/bosh.git
-cd bosh/release/template/instance
-./prepare_instance.sh
-
-chmod 777 /var/vcap/deploy
-
-exit
-```
-
-**From another terminal on your local machine:**
-
-Make a copy of the `examples/chefbosh` folder contents and add your AWS credentials as appropriate into `config.yml`:
-
-```
-mkdir -p ~/.chefbosh
-chmod 700 ~/.chefbosh
-cd ~/.chefbosh
-
-git clone git://github.com/drnic/bosh-getting-started.git
-cp -r bosh-getting-started/examples/chefbosh/* .
-vim config.yml
-```
-
-* replace all `PUBLIC_DNS_NAME` with your fog-created VM's `server.dns_name` (e.g. ec2-10-2-3-4.compute-1.amazonaws.com)
-* replace `ACCESS_KEY_ID` with your AWS access key id
-* replace `SECRET_ACCESS_KEY` with your AWS secret access key
-
-In VIM, you can "replace all" by typing:
-
-```
-:%s/PUBLIC_DNS_NAME/ec2-10-2-3-4.compute-1.amazonaws.com/g
-```
-
-We'll now use chef to install and start all the parts of BOSH. The `chef_deployer` subfolder of BOSH orchestrates this.
-
-Get the chef_deployer & cookbooks (all from the same [bosh](https://github.com/cloudfoundry/bosh) repository) and we're almost done!
-
-```
-cd ~/.chefbosh
-git clone https://github.com/cloudfoundry/bosh.git
-cd bosh/chef_deployer
-bundle
-cd ../release/
-```
-
-Now we can run chef to install BOSH:
-
-```
-ruby ../chef_deployer/bin/chef_deployer deploy ~/.chefbosh
-...lots of chef...
-```
+## Connect to BOSH
 
 We can now connect to our BOSH!
 
@@ -215,3 +150,24 @@ No deployments
 
 Good job.
 
+
+## Questions
+
+### Not using fog?
+
+Here are a selection of AMIs to use that are [used by the fog](https://github.com/fog/fog/blob/master/lib/fog/aws/models/compute/server.rb#L55-66) example above:
+
+```ruby
+when 'ap-northeast-1'
+  'ami-5e0fa45f'
+when 'ap-southeast-1'
+  'ami-f092eca2'
+when 'eu-west-1'
+  'ami-3d1f2b49'
+when 'us-east-1'
+  'ami-3202f25b'
+when 'us-west-1'
+  'ami-f5bfefb0'
+when 'us-west-2'
+  'ami-e0ec60d0'
+```
