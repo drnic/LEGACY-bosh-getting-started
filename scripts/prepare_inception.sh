@@ -25,8 +25,8 @@ bosh_app_dir=/var/vcap
 mkdir -p ${bosh_app_dir}
 mkdir -p ${bosh_app_dir}/bosh
 export PATH=${bosh_app_dir}/bosh/bin:$PATH
-mkdir -p ${bosh_app_dir}/deploy ${bosh_app_dir}/storage mkdir ${bosh_app_dir}/deployments
-chown vcap:vcap ${bosh_app_dir}/deploy ${bosh_app_dir}/storage ${bosh_app_dir}/deployments
+mkdir -p ${bosh_app_dir}/deploy ${bosh_app_dir}/store mkdir ${bosh_app_dir}/deployments
+chown vcap:vcap ${bosh_app_dir}/deploy ${bosh_app_dir}/store ${bosh_app_dir}/deployments
 echo "export PATH=${bosh_app_dir}/bosh/bin:\$PATH" >> /root/.bashrc
 echo "export PATH=${bosh_app_dir}/bosh/bin:\$PATH" >> /home/vcap/.bashrc
 

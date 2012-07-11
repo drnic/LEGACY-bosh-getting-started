@@ -116,6 +116,8 @@ server.dns_name
 "ec2-10-9-8-7.compute-1.amazonaws.com"
 ```
 
+This DNS name will be used later to SSH into our Inception VM.
+
 The security group for the Inception & BOSH VMs will need some TCP ports opened:
 
 ``` ruby
@@ -125,8 +127,33 @@ group.authorize_port_range(6868..6868) # Message Bus
 group.authorize_port_range(25888..25888) # AWS Registry API
 ```
 
-TODO: Attach EBS to /var/vcap/storage https://gist.github.com/724912/116f35d0b7ab30db765b858faea123919592d067
 
+``` ruby
+# Create/attach a volume at /dev/sdi (or somewhere free)
+volume = connection.volumes.create(:size => 5, :device => "/dev/sdi", :availability_zone => server.availability_zone)
+volume.server = server
+
+# Format and mount the volume
+server.ssh([
+  'sudo mkfs.ext4 /dev/sdi -F', 
+  'sudo mkdir -p /var/vcap/store', 
+  'sudo mount /dev/sdi /var/vcap/store'])
+```
+
+You can now view the mounted 5G volume at `/var/vcap/store`
+
+```
+>> puts server.ssh(['df']).first.stdout
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda1              8256952    740388   7097136  10% /
+none                    830428       120    830308   1% /dev
+none                    880720         0    880720   0% /dev/shm
+none                    880720        48    880672   1% /var/run
+none                    880720         0    880720   0% /var/lock
+none                    880720         0    880720   0% /lib/init/rw
+/dev/sdb             153899044    192068 145889352   1% /mnt
+/dev/sdi               5160576    141304   4757128   3% /var/vcap/store
+```
 
 ## Preparation
 
