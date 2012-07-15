@@ -2,22 +2,33 @@
 
 require "fileutils"
 
-name         = ARGV.shift
-provider     = ARGV.shift
-access_key   = ARGV.shift
-secret_key   = ARGV.shift
-region       = ARGV.shift
-keypair_name = ARGV.shift
-ipaddress    = ARGV.shift
-password     = ARGV.shift
-
 def usage
-  $stderr.puts "USAGE: create_micro_bosh_yml NAME aws ACCESS_KEY SECRET_KEY REGION KEYNAME IP_ADDRESS RAW_PASSWORD"
+  $stderr.puts "USAGE:"
+  $stderr.puts "  For AWS: create_micro_bosh_yml NAME aws ACCESS_KEY SECRET_KEY REGION KEYNAME IP_ADDRESS RAW_PASSWORD"
+  $stderr.puts "  For OpenStack: create_micro_bosh_yml NAME openstack NAME OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL KEYNAME RAW_PASSWORD"
   exit 1
 end
 
+name     = ARGV.shift
+provider = ARGV.shift
 usage unless provider
-usage unless provider.upcase == 'AWS'
+case provider.upcase
+  when "AWS"
+    access_key   = ARGV.shift
+    secret_key   = ARGV.shift
+    region       = ARGV.shift
+    keypair_name = ARGV.shift
+    ipaddress    = ARGV.shift
+    password     = ARGV.shift
+  when "OPENSTACK"
+    os_username    = ARGV.shift
+    os_password    = ARGV.shift
+    os_tenant_name = ARGV.shift
+    os_auth_url    = ARGV.shift
+    keypair_name   = ARGV.shift
+    password       = ARGV.shift
+  else usage
+end
 usage unless keypair_name
 
 def salted_password(password)
@@ -94,10 +105,59 @@ cloud:
 YAML
 end
 
-salty = salted_password(password)
-yml = aws_config_yml(name, access_key, secret_key, region, keypair_name, ipaddress, salty, options={})
+def openstack_config_yml(name, username, api_key, tenant, auth_url, key_name, salted_password, options={})
 
-micro_bosh_yml = File.join(name, "micro_bosh.yml")
-FileUtils.mkdir_p(name)
+  security_group = options[:security_group] || 'default'
+  instance_type  = options[:instance_type] || 'm1.small'
+  <<-YAML
+---
+name: #{name}
+
+env:
+  bosh:
+    password: #{salted_password}
+
+logging:
+  level: DEBUG
+
+network:
+  type: dynamic
+
+resources:
+  cloud_properties:
+    instance_type: #{instance_type}
+
+cloud:
+  plugin: openstack
+  properties:
+    openstack:
+      auth_url: #{auth_url}
+      username: #{username}
+      api_key:  #{api_key}
+      tenant:   #{tenant}
+      default_key_name: #{key_name}
+      default_security_groups: ["#{security_group}"]
+      openstack_private_key: /home/vcap/.ssh/#{key_name}.pem
+      create_stemcell_image: upload
+    registry:
+      endpoint: http://admin:admin@localhost:25889
+      user: admin
+      password: admin
+YAML
+end
+
+
+salty = salted_password(password)
+yml = case provider.upcase
+  when "AWS"
+    aws_config_yml(name, access_key, secret_key, region, keypair_name, ipaddress, salty, options={})
+  when "OPENSTACK"
+    openstack_config_yml(name, os_username, os_password, os_tenant_name, os_auth_url, keypair_name, salty, options={})
+  else usage
+end
+
+deployment_dir = File.join("/var", "vcap", "deployments", name)
+FileUtils.mkdir_p(deployment_dir)
+micro_bosh_yml = File.join(deployment_dir, "micro_bosh.yml")
 File.open(micro_bosh_yml, "w") { |f| f << yml }
 $stderr.puts "Created #{micro_bosh_yml}..."

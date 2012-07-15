@@ -3,39 +3,56 @@
 require "fileutils"
 require "fog"
 
-provider     = ARGV.shift
-access_key   = ARGV.shift
-secret_key   = ARGV.shift
-region       = ARGV.shift
-keypair_name = ARGV.shift
-
 def usage
-  $stderr.puts "USAGE: create_keypair aws ACCESS_KEY SECRET_KEY REGION KEYNAME"
+  $stderr.puts "USAGE:"
+  $stderr.puts "  For AWS: create_keypair aws ACCESS_KEY SECRET_KEY REGION KEYNAME"
+  $stderr.puts "  For OpenStack: create_keypair openstack OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL KEYNAME"
   exit 1
 end
 
+provider = ARGV.shift
 usage unless provider
-usage unless provider.upcase == 'AWS'
-usage unless keypair_name
-
-def create_keypair(access_key, secret_key, region, keypair_name, options={})
-  user = options.delete(:user) || "vcap"
-  provider = options.delete(:provider) || "AWS"
-  pem = "/home/#{user}/.ssh/#{keypair_name}.pem"
-  if File.exist?(pem)
-    $stderr.puts "#{provider} key #{keypair_name} already created at #{pem}"
-  else
-    connection = Fog::Compute.new({
-      :provider => provider,
+case provider.upcase
+  when "AWS"
+    access_key = ARGV.shift
+    secret_key = ARGV.shift
+    region     = ARGV.shift
+    fog_options = {
+      :provider => "AWS",
       :region => region,
       :aws_access_key_id => access_key,
       :aws_secret_access_key => secret_key,
-    }.merge(options))
+    }
+  when "OPENSTACK"
+    os_username    = ARGV.shift
+    os_password    = ARGV.shift
+    os_tenant_name = ARGV.shift
+    os_auth_url    = ARGV.shift
+    fog_options = {
+      :provider => "OpenStack",
+      :openstack_username => os_username,
+      :openstack_api_key => os_password,
+      :openstack_tenant => os_tenant_name,
+      :openstack_auth_url => os_auth_url,
+    }
+  else usage
+end
+keypair_name = ARGV.shift
+usage unless keypair_name
+
+def create_keypair(keypair_name, options={})
+  user = options.delete(:user) || "vcap"
+  pem = "/home/#{user}/.ssh/#{keypair_name}.pem"
+  if File.exist?(pem)
+    $stderr.puts "#{options[:provider]} key #{keypair_name} already created at #{pem}"
+  else
+    connection = Fog::Compute.new(options)
     kp = connection.key_pairs.create(:name => keypair_name)
     kp.write(pem)
     FileUtils.chown user, user, pem
+    $stdout.puts "#{options[:provider]} key #{keypair_name} created at #{pem}"
   end
   pem
 end
 
-create_keypair(access_key, secret_key, region, keypair_name)
+create_keypair(keypair_name, fog_options)

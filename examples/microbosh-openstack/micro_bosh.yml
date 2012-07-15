@@ -1,0 +1,33 @@
+---
+name: microbosh-openstack
+
+env:
+  bosh:
+    password: SALTED_PASSWORD
+
+logging:
+  level: DEBUG
+
+network:
+  type: dynamic
+
+resources:
+  cloud_properties:
+    instance_type: m1.small
+
+cloud:
+  plugin: openstack
+  properties:
+    openstack:
+      auth_url: OS_AUTH_URL
+      username: OS_USERNAME
+      api_key: OS_PASSWORD
+      tenant: OS_TENANT_NAME
+      default_key_name: inception
+      default_security_groups: ["default"]
+      openstack_private_key: /home/vcap/.ssh/inception.pem
+      create_stemcell_image: upload
+    registry:
+      endpoint: http://admin:admin@localhost:25889
+      user: admin
+      password: admin
