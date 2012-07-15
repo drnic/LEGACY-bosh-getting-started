@@ -111,27 +111,20 @@ NOTE: see $REGION set to `us-east-1` below. Change as appropriate.
 ```
 $ ssh ubuntu@ec2-10-2-3-4.compute-1.amazonaws.com
 sudo su -
-groupadd vcap 
-useradd vcap -m -g vcap
 
-mkdir -p /var/vcap/
+branch="create-user"
+curl https://raw.github.com/drnic/bosh-getting-started/${branch}/scripts/create_vcap_user.sh | bash
+
+mkdir -p /var/vcap
 cp /home/ubuntu/.ssh/authorized_keys /var/vcap/
 
-export REGION=us-east-1
-echo "deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu/ lucid multiverse" >> /etc/apt/sources.list
+az=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=${az:0:${#az}-1} # remove last character of $az
 
-apt-get update
-apt-get install git-core -y
-
-mkdir /var/vcap/bootstrap
-cd /var/vcap/bootstrap
-git clone https://github.com/cloudfoundry/bosh.git
-cd bosh/release/template/instance
-./prepare_instance.sh
-
-chmod 777 /var/vcap/deploy
-
-exit
+echo BOSH located in region ${region} in AZ ${az}
+echo "deb http://${region}.ec2.archive.ubuntu.com/ubuntu/ lucid multiverse" >> /etc/apt/sources.list
+# curl https://raw.github.com/cloudfoundry/bosh/master/release/template/instance/prepare_instance.sh | bash
+curl https://raw.github.com/drnic/bosh/prepare_chef_deployer/release/template/instance/prepare_instance.sh | bash
 ```
 
 **From another terminal on your local machine:**
@@ -160,27 +153,39 @@ In VIM, you can "replace all" by typing:
 
 We'll now use chef to install and start all the parts of BOSH. The `chef_deployer` subfolder of BOSH orchestrates this.
 
-Get the chef_deployer & cookbooks (all from the same [bosh](https://github.com/cloudfoundry/bosh) repository) and we're almost done!
+Get the chef_deployer & cookbooks (all from the same [bosh](https://github.com/cloudfoundry/bosh) repository) and run chef upon your VM.
 
 ```
 cd ~/.chefbosh
 git clone https://github.com/cloudfoundry/bosh.git
 cd bosh/chef_deployer
+
 bundle
 cd ../release/
-```
-
-Now we can run chef to install BOSH:
-
-```
-ruby ../chef_deployer/bin/chef_deployer deploy ~/.chefbosh
+ruby ../chef_deployer/bin/chef_deployer deploy ~/.chefbosh --default-password=''
 ...lots of chef...
 ```
 
-We can now connect to our BOSH!
+Now apply patches to BOSH CLI:
 
 ```
-$ gem install bosh_cli
+# need fix for https://cloudfoundry.atlassian.net/browse/CF-71
+# http://reviews.cloudfoundry.org/#/c/7086/
+git fetch ssh://$(whoami)@reviews.cloudfoundry.org:29418/bosh refs/changes/86/7086/1 && git cherry-pick FETCH_HEAD
+cd ~/.chefbosh/bosh/cli
+bundle install --without=development test
+rake install
+```
+
+When no patches are necessary to the BOSH CLI, it can be installed from RubyGems:
+
+```
+gem install bosh_cli
+```
+
+Now target your BOSH from the CLI:
+
+```
 $ bosh target ec2-10-2-3-4.compute-1.amazonaws.com:25555
 Target set to 'myfirstbosh (http://ec2-10-2-3-4.compute-1.amazonaws.com:25555) Ver: 0.4 (1e5bed5c)'
 Your username: admin

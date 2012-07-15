@@ -6,7 +6,7 @@ roles:
   - redis:        PUBLIC_DNS_NAME
   - director:     PUBLIC_DNS_NAME
   - aws_registry: PUBLIC_DNS_NAME
-user: ubuntu
+user: vcap
 paths:
   repo_cache: /var/vcap/deploy/repos
   cookbooks: /var/vcap/deploy/cookbooks
