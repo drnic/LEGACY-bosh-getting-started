@@ -137,6 +137,7 @@ chmod 700 ~/.chefbosh
 cd ~/.chefbosh
 
 git clone git://github.com/drnic/bosh-getting-started.git
+git checkout create-user
 cp -r bosh-getting-started/examples/chefbosh/* .
 vim config.yml
 ```
@@ -144,6 +145,7 @@ vim config.yml
 * replace all `PUBLIC_DNS_NAME` with your fog-created VM's `server.dns_name` (e.g. ec2-10-2-3-4.compute-1.amazonaws.com)
 * replace `ACCESS_KEY_ID` with your AWS access key id
 * replace `SECRET_ACCESS_KEY` with your AWS secret access key
+* replace `REGION` with the ec2 region (e.g. us-east-1)
 
 In VIM, you can "replace all" by typing:
 
@@ -166,7 +168,20 @@ ruby ../chef_deployer/bin/chef_deployer deploy ~/.chefbosh --default-password=''
 ...lots of chef...
 ```
 
-Now apply patches to BOSH CLI:
+If there is a problem with read_pipe.expect(/password /)
+See http://reviews.cloudfoundry.org/#/c/6935/
+
+```
+vim ~/.chefbosh/bosh/chef_deployer/lib/chef_deployer.rb
+wrap line 37 in a rescue:
+  begin
+    result = read_pipe.expect(/password: /)
+  rescue Errno::EIO => e
+    raise e if password
+  end
+```
+
+Now apply patches to BOSH CLI if bosh --version returns 0.9.14 or less:
 
 ```
 # need fix for https://cloudfoundry.atlassian.net/browse/CF-71

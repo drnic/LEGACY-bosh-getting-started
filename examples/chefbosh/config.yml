@@ -19,7 +19,7 @@ chef_node:
       secret_access_key: SECRET_ACCESS_KEY
       default_key_name: fog_default
       default_security_groups: ["default"]
-      ec2_endpoint: ec2.us-east-1.amazonaws.com
+      ec2_endpoint: ec2.REGION.amazonaws.com
       max_retries: 2
   aws_registry:
     endpoint: http://admin:admin@PUBLIC_DNS_NAME:25777
