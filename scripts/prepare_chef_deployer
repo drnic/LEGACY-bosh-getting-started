@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# USAGE: prepare_chef_deployer NAME aws ACCESS_KEY SECRET_KEY REGION BOSH_DNS PASSWORD
+#
+# Prepares your local machine/inception VM to run chef_deployer,
+# which in turn runs chef-solo on a target BOSH VM
+# to convert it from a blank Ubuntu VM into BOSH
+#
+# Creates a ~/.chefbosh folder
+#
+
+name=$1
+provider=$2
+access_key=$3
+secret_key=$4
+region=$5
+bosh_dns=$6
+password=$7
+
+chefbosh_path=~/.chefbosh
+chefbosh_config_path=${chefbosh_path}/${name}
+bosh_path=${chefbosh_config_path}/bosh
+bosh_getting_started_path=${chefbosh_config_path}/bosh-getting-started
+scripts_path=${bosh_getting_started_path}/scripts
+
+mkdir -p ${chefbosh_config_path}
+
+if [[ -d ${bosh_path} ]]
+then
+  echo "Already exists ${bosh_path}, ignoring..."
+else
+  cd ${chefbosh_config_path}
+  echo "Cloning bosh..."
+  git clone ${BOSH_REPO:='https://github.com/cloudfoundry/bosh.git'}
+fi
+
+# TODO - remove this PATCH
+if [[ ${BOSH_PATCH} ]]
+then
+  cd ${bosh_path}
+  git pull ${BOSH_PATCH}
+fi
+
+cd ${bosh_path}/chef_deployer
+bundle install
+
+if [[ -d ${bosh_getting_started_path} ]]; then
+  echo "Already exists ${bosh_path}, ignoring..."
+else
+  cd ${chefbosh_config_path}
+  echo "Cloning bosh-getting-started..."
+  git clone ${BOSH_GETTING_STARTED:='git://github.com/drnic/bosh-getting-started.git'}
+fi
+
+cp -R ${bosh_getting_started_path}/examples/chefbosh/* ${chefbosh_config_path}/
+
+cd ${chefbosh_config_path}
+${scripts_path}/create_chefbosh_yml aws ${access_key} ${secret_key} ${region} ${bosh_dns} ${password}
+
+cd ${bosh_path}/release
+ruby ../chef_deployer/bin/chef_deployer deploy ${chefbosh_config_path} --default-password=''
