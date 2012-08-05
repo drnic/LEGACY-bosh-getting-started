@@ -48,7 +48,7 @@ libmysqlclient-dev libxml2-dev libxslt-dev libpq-dev genisoimage mkpasswd \
 debootstrap python-vm-builder -y
 
 echo "install: --no-ri --no-rdoc" > /etc/gemrc
-echo "update: --no-ri --no-rdoc" > /etc/gemrc
+echo "update: --no-ri --no-rdoc" >> /etc/gemrc
 if [[ -x rvm ]]
 then
   rvm get stable
@@ -61,16 +61,9 @@ rvm 1.9.3
 rvm alias create default 1.9.3
 gem install bundler --no-ri --no-rdoc
 gem pristine rake
+gem install bundler fog --no-ri --no-rdoc
 
 mkdir -p ${bosh_app_dir}/bootstrap
-cd ${bosh_app_dir}/bootstrap
-git clone git://github.com/fog/fog.git
-cd ${bosh_app_dir}/bootstrap/fog
-bundle install
-bundle exec rake build
-fog_version=$(ruby -I${bosh_app_dir}/bootstrap/fog/lib -r"fog" -e"puts Fog::VERSION")
-gem install pkg/fog-${fog_version}.gem --no-ri --no-rdoc
-
 cd ${bosh_app_dir}/bootstrap
 git clone git://github.com/frodenas/bosh.git
 cd ${bosh_app_dir}/bootstrap/bosh/cli/

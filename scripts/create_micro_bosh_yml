@@ -123,8 +123,7 @@ cloud:
       tenant:   #{tenant}
       default_key_name: #{key_name}
       default_security_groups: ["#{security_group}"]
-      openstack_private_key: /home/vcap/.ssh/#{key_name}.pem
-      create_stemcell_image: upload
+      private_key: /home/vcap/.ssh/#{key_name}.pem
     registry:
       endpoint: http://admin:admin@localhost:25889
       user: admin

@@ -41,6 +41,11 @@ If you have access to a unused baremetal server, you can build a complete OpenSt
 * [DevStack](http://devstack.org/)
 * [hastexo! tutorial](http://www.hastexo.com/resources/docs/installing-openstack-essex-20121-ubuntu-1204-precise-pangolin)
 
+When you install OpenStack, there are 2 important requirements you must fulfill:
+
+* Be sure your flavors include ephemeral disk space
+* The network name for your VMs must be "private" and/or "public"
+
 Once you've installed and tested your OpenStack box, you'll need to [upload](http://docs.openstack.org/developer/glance/glance.html#examples-of-uploading-different-kinds-of-images) an [Ubuntu 10.04 LTS 64-bit image](http://uec-images.ubuntu.com/lucid/current/) before proceeding with the next steps.
 
 ## Create the Inception VM
@@ -225,8 +230,7 @@ cloud:
       tenant: OS_TENANT_NAME
       default_key_name: inception
       default_security_groups: ["default"]
-      openstack_private_key: /home/vcap/.ssh/inception.pem
-      create_stemcell_image: upload
+      private_key: /home/vcap/.ssh/inception.pem
     registry:
       endpoint: http://admin:admin@localhost:25889
       user: admin
