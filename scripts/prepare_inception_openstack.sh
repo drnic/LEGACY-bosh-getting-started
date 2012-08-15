@@ -25,8 +25,8 @@ bosh_app_dir=/var/vcap
 mkdir -p ${bosh_app_dir}
 mkdir -p ${bosh_app_dir}/bosh
 export PATH=${bosh_app_dir}/bosh/bin:$PATH
-mkdir -p ${bosh_app_dir}/deployments ${bosh_app_dir}/releases ${bosh_app_dir}/manifests
-chown vcap:vcap ${bosh_app_dir}/deployments ${bosh_app_dir}/releases ${bosh_app_dir}/manifests
+mkdir -p ${bosh_app_dir}/deployments ${bosh_app_dir}/releases ${bosh_app_dir}/manifests ${bosh_app_dir}/stemcells
+chown vcap:vcap ${bosh_app_dir}/deployments ${bosh_app_dir}/releases ${bosh_app_dir}/manifests ${bosh_app_dir}/stemcells
 echo "export PATH=${bosh_app_dir}/bosh/bin:\$PATH" >> /root/.bashrc
 echo "export PATH=${bosh_app_dir}/bosh/bin:\$PATH" >> /home/vcap/.bashrc
 
@@ -45,7 +45,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install build-essential libsqlite3-dev curl rsync git-core \
 libmysqlclient-dev libxml2-dev libxslt-dev libpq-dev genisoimage mkpasswd \
-debootstrap python-vm-builder -y
+debootstrap -y
 
 echo "install: --no-ri --no-rdoc" > /etc/gemrc
 echo "update: --no-ri --no-rdoc" >> /etc/gemrc
@@ -61,7 +61,7 @@ rvm 1.9.3
 rvm alias create default 1.9.3
 gem install bundler --no-ri --no-rdoc
 gem pristine rake
-gem install bundler fog --no-ri --no-rdoc
+gem install fog --no-ri --no-rdoc
 
 mkdir -p ${bosh_app_dir}/bootstrap
 cd ${bosh_app_dir}/bootstrap

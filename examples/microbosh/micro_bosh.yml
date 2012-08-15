@@ -13,6 +13,7 @@ network:
   ip: IPADDRESS
 
 resources:
+  persistent_disk: 4096
   cloud_properties:
     instance_type: m1.small
     root_device_name: /dev/sda1

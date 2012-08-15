@@ -48,9 +48,7 @@ def aws_config_yml(name, access_key, secret_key, region, key_name, ipaddress, sa
   stemcell_disk     = options[:stemcell_disk] || 4096
   security_group    = options[:security_group] || 'default'             
   instance_type     = options[:instance_type] || 'm1.small'
-  stemcell_disk     = options[:stemcell_disk] || 4096
-  security_group    = options[:security_group] || 'default'
-  instance_type     = options[:instance_type] || 'm1.small'
+  persistent_disk   = options[:persistent_disk] || 4096
   <<-YAML
 ---
 name: #{name}
@@ -67,6 +65,7 @@ network:
   ip: #{ipaddress}
 
 resources:
+  persistent_disk: #{persistent_disk}
   cloud_properties:
     instance_type: #{instance_type}
     root_device_name: /dev/sda1
@@ -93,8 +92,9 @@ end
 
 def openstack_config_yml(name, username, api_key, tenant, auth_url, key_name, salted_password, options={})
 
-  security_group = options[:security_group] || 'default'
-  instance_type  = options[:instance_type] || 'm1.small'
+  security_group  = options[:security_group] || 'default'
+  instance_type   = options[:instance_type] || 'm1.small'
+  persistent_disk = options[:persistent_disk] || 4096
   <<-YAML
 ---
 name: #{name}
@@ -110,6 +110,7 @@ network:
   type: dynamic
 
 resources:
+  persistent_disk: #{persistent_disk}
   cloud_properties:
     instance_type: #{instance_type}
 

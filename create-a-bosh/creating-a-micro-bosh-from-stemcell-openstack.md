@@ -217,6 +217,7 @@ network:
   type: dynamic
 
 resources:
+  persistent_disk: 4096
   cloud_properties:
     instance_type: m1.small
 
@@ -269,104 +270,26 @@ cd /var/vcap/manifests
 curl https://raw.github.com/drnic/bosh-getting-started/master/examples/microbosh-openstack/openstack_micro.yml > openstack_micro.yml
 ```
 
-### Build the chroot
-
-Create the base contents of the OpenStack stemcell (a vm template with an [embedded BOSH Agent](https://github.com/cloudfoundry/bosh/tree/master/agent)):
-
-```
-cd /var/vcap/bootstrap/bosh/agent
-rake stemcell:chroot_tgz[openstack]
-```
-
-This outputs `Generated chroot tgz: /var/tmp/bosh/agent-x.y.z-nnnnn/chroot-openstack.tgz`.
-
-Optional: If you need to repeat this process several times, you can speed it up if you download an Ubuntu 10.04 LTS 64-bit ISO and put it into `/var/tmp`:
-
-```
-cd /var/tmp
-wget 'http://releases.ubuntu.com/lucid/ubuntu-10.04.4-server-amd64.iso'
-mv ubuntu-10.04.4-server-amd64.iso ubuntu.iso
-```
-
 ### Build micro BOSH stemcell
 
 Now you have all the pieces to assemble the micro BOSH OpenStack stemcell:
 
 ```
 cd /var/vcap/bootstrap/bosh/agent
-rake stemcell:micro[micro_bosh:openstack,/var/vcap/manifests/openstack_micro.yml,/var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.tgz,/var/tmp/bosh/agent-x.y.z-nnnnn/chroot-openstack.tgz]
+rake stemcell2:micro["openstack",/var/vcap/manifests/openstack_micro.yml,/var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.tgz]
 ```
 
 This outputs:
 
 ```
-Generated stemcell: /var/tmp/bosh/agent-x.y.z-nnnnn/bosh-stemcell-openstack-x.y.z.tgz
-Check /var/tmp/bosh/agent-x.y.z-nnnnn for build artifacts
+Generated stemcell: /var/tmp/bosh/agent-x.y.z-nnnnn/work/work/micro-bosh-stemcell-openstack-x.y.z.tgz
 ```
 
-### Deploy the micro BOSH image
-
-Normal behaviour is to upload the micro BOSH image in the deploy process, but as OpenStack does not yet support creating images from a volume snapshot, we must upload it manually via Glance.
-
-First of all [install Glance](http://glance.openstack.org/installing.html), and then upload the stemcell image.
-
-Add a kernel (AKI) image to our OpenStack box:
+Copy the generated stemcell to a safe location:
 
 ```
-$ glance add disk_format=aki container_format=aki name="vmlinuz-2.6.38-15-virtual" < \
-  /var/tmp/bosh/agent-x.y.z-nnnnn/chroot/boot/vmlinuz-2.6.38-15-virtual
-Uploading image 'vmlinuz-2.6.38-15-virtual'
-===============================================================================[100%] 2.77M/s, ETA  0h  0m  0s
-Added new image with ID: 5b35a2ab-387e-4816-9dd3-c4376724ac86
-```
-
-Now the ramdisk (ARI) image:
-
-```
-$ glance add disk_format=ari container_format=ari name="initrd.img-2.6.38-15-virtual" < \
-  /var/tmp/bosh/agent-x.y.z-nnnnn/chroot/boot/initrd.img-2.6.38-15-virtual
-Uploading image 'initrd.img-2.6.38-15-virtual'
-=====================================================================================[100%] 11.8M/s, ETA  0h  0m  0s
-Added new image with ID: 48502cfe-ff04-4837-a96a-082091b7ef11
-```
-
-List the available images:
-
-```
-$ glance index
-ID                                   Name                           Disk Format          Container Format     Size
------------------------------------- ------------------------------ -------------------- -------------------- --------------
-48502cfe-ff04-4837-a96a-082091b7ef11 initrd.img-2.6.38-15-virtual   ari                  ari                         8704549
-5b35a2ab-387e-4816-9dd3-c4376724ac86 vmlinuz-2.6.38-15-virtual      aki                  aki                         4599504
-f1baf169-7bb7-4f84-a0f1-4b547e1b42be lucid-server-cloudimg-amd64    ami                  ami                      1476395008
-02c62c94-601a-4357-a5fe-c7de9b7911d2 lucid-server-cloudimg-amd64-lo ari                  ari                           91708
-2a7a68d9-8fca-479a-ad3d-051b36f1ce77 lucid-server-cloudimg-amd64-vm aki                  aki                         4119680
-```
-
-Now we're going to upload the micro BOSH stemcel (AMI) (remember to change the kernel_id and ramdisk_id at the below command with the ID of your images):
-
-```
-$ glance add name="microbosh-stemcell-openstack-0.6.1" container_format="ami" disk_format="ami" is_public=true \
-  kernel_id="5b35a2ab-387e-4816-9dd3-c4376724ac86" \
-  ramdisk_id="48502cfe-ff04-4837-a96a-082091b7ef11" < \
-  /var/tmp/bosh/agent-x.y.z-nnnnn/ubuntu-xen/root.img
-Uploading image 'microbosh-stemcell-openstack-0.6.1'
-====================================================================================[100%] 41.3M/s, ETA  0h  0m  0s
-Added new image with ID: 0966813e-79f1-4a95-8ffa-a9bdf573028b
-```
-
-Now check that all images are registered in Glance:
-
-```
-$ glance index
-ID                                   Name                           Disk Format          Container Format     Size
------------------------------------- ------------------------------ -------------------- -------------------- --------------
-0966813e-79f1-4a95-8ffa-a9bdf573028b microbosh-stemcell-openstack-0 ami                  ami                      4294967296
-48502cfe-ff04-4837-a96a-082091b7ef11 initrd.img-2.6.38-15-virtual   ari                  ari                         8704549
-5b35a2ab-387e-4816-9dd3-c4376724ac86 vmlinuz-2.6.38-15-virtual      aki                  aki                         4599504
-f1baf169-7bb7-4f84-a0f1-4b547e1b42be lucid-server-cloudimg-amd64    ami                  ami                      1476395008
-02c62c94-601a-4357-a5fe-c7de9b7911d2 lucid-server-cloudimg-amd64-lo ari                  ari                           91708
-2a7a68d9-8fca-479a-ad3d-051b36f1ce77 lucid-server-cloudimg-amd64-vm aki                  aki                         4119680
+cd /var/vcap/stemcells
+cp /var/tmp/bosh/agent-x.y.z-nnnnn/work/work/micro-bosh-stemcell-openstack-x.y.z.tgz .
 ```
 
 ## Deployment
@@ -380,27 +303,42 @@ WARNING! Your target has been changed to `http://microbosh-openstack:25555'!
 Deployment set to '/var/vcap/deployments/microbosh-openstack/micro_bosh.yml'
 ```
 
-Deploy the deployment using the stemcell image you uploaded previously, replacing `YOUR_IMAGE_UUID` with the OpenStack image UUID:
+Deploy the deployment using the custom stemcell image you generated previously:
 
 ```
-$ bosh micro deploy YOUR_IMAGE_UUID
+$ bosh micro deploy /var/vcap/stemcells/micro-bosh-stemcell-openstack-x.y.z.tgz
 Deploying new micro BOSH instance `microbosh-openstack/micro_bosh.yml' to `http://microbosh-openstack:25555' (type 'yes' to continue): yes
 
+Verifying stemcell...
+File exists and readable                                     OK
+Manifest not found in cache, verifying tarball...
+Extract tarball                                              OK
+Manifest exists                                              OK
+Stemcell image file                                          OK
+Writing manifest to cache...
+Stemcell properties                                          OK
+
+Stemcell info
+-------------
+Name:    micro-bosh-stemcell
+Version: 0.6.4
+
+
 Deploy Micro BOSH
-  using existing stemcell (00:00:00)
-  creating VM from 0966813e-79f1-4a95-8ffa-a9bdf573028b (00:00:13)
-  waiting for the agent (00:01:32)
-  create disk (00:00:02)
-  mount disk (00:00:06)
-  fetching apply spec (00:00:00)
+  unpacking stemcell (00:00:43)
+  uploading stemcell (00:32:25)
+  creating VM from 5aa08232-e53b-4efe-abee-385a7afb9421 (00:04:38)
+  waiting for the agent (00:02:19)
+  create disk (00:00:15)
+  mount disk (00:00:07)
   stopping agent services (00:00:01)
-  applying micro BOSH spec (00:00:10)
+  applying micro BOSH spec (00:01:20)
   starting agent services (00:00:00)
-  waiting for the director (00:00:48)
-Done             11/11 00:02:58
+  waiting for the director (00:02:21)
+Done             11/11 00:44:30
 WARNING! Your target has been changed to `http://10.0.0.3:25555'!
 Deployment set to '/var/vcap/deployments/microbosh-openstack/micro_bosh.yml'
-Deployed `microbosh-openstack/micro_bosh.yml' to `http://microbosh-openstack:25555', took 00:02:58 to complete
+Deployed `microbosh-openstack/micro_bosh.yml' to `http://microbosh-openstack:25555', took 00:44:30 to complete
 ```
 
 NOTE: To run the `bosh micro deployment microbosh-openstack` command you must be in a folder that itself contains a folder `microbosh-openstack` that contains `micro-bosh.yml`. In our tutorial, we are in `/var/vcap/deployments` which contains `/var/vcap/deployments/microbosh-openstack/micro-bosh.yml`.
@@ -409,10 +347,10 @@ We can now connect to our BOSH!
 
 ```
 $ bosh target http://10.0.0.3
-Target set to 'micro (http://10.0.0.3:25555) Ver: 0.6.2 (release:bfc39b70 bosh:59cbcb8f)'
+Target set to `microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)'
 Your username: admin
 Enter password: *****
-Logged in as 'admin'
+Logged in as `admin'
 ```
 
 Username/password was configured as admin/admin unless you changed it.
@@ -423,8 +361,8 @@ If you ask your BOSH a few questions it will tell you the following:
 $ bosh status
 Updating director data... done
 
-Target         micro (http://10.0.0.3:25555) Ver: 0.6.2 (release:bfc39b70 bosh:59cbcb8f)
-UUID           2137f5c8-56ae-44f1-8d48-d18a42442f1a
+Target         microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)
+UUID           8d40adaf-2ebd-4a52-b654-deaffa088b02
 User           admin
 Deployment     not set
 ```
@@ -451,13 +389,13 @@ The status command will show the persisted state for a given micro BOSH instance
 
 ```
 $ bosh micro status
-Stemcell CID   0966813e-79f1-4a95-8ffa-a9bdf573028b
-Stemcell name  0966813e-79f1-4a95-8ffa-a9bdf573028b
-VM CID         d17494ce-dfe9-4acf-9c08-44d8c230f61d
-Disk CID       19
-Micro BOSH CID bm-1f9fd181-9a4b-4245-afa9-2810157c09d2
+Stemcell CID   5aa08232-e53b-4efe-abee-385a7afb9421
+Stemcell name  micro-bosh-stemcell-openstack-0.6.4
+VM CID         4f466ada-b895-49ec-9ddc-19a000ff1abe
+Disk CID       4
+Micro BOSH CID bm-0a16e407-6a06-464a-a2c2-55bcc0b8d42b
 Deployment     /var/vcap/deployments/microbosh-openstack/micro_bosh.yml
-Target         micro (http://10.0.0.3:25555) Ver: 0.6.2 (release:bfc39b70 bosh:59cbcb8f)
+Target         microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)
 ```
 
 ### Listing Deployments
@@ -470,7 +408,7 @@ $ bosh micro deployments
 +---------------------+--------------------------------------+--------------------------------------+
 | Name                | VM name                              | Stemcell name                        |
 +---------------------+--------------------------------------+--------------------------------------+
-| microbosh-openstack | d17494ce-dfe9-4acf-9c08-44d8c230f61d | 0966813e-79f1-4a95-8ffa-a9bdf573028b |
+| microbosh-openstack | 4f466ada-b895-49ec-9ddc-19a000ff1abe | 5aa08232-e53b-4efe-abee-385a7afb9421 |
 +---------------------+--------------------------------------+--------------------------------------+
 
 Deployments total: 1
@@ -527,12 +465,12 @@ THIS IS A VERY DESTRUCTIVE OPERATION AND IT CANNOT BE UNDONE!
 Are you sure? (type 'yes' to continue): yes
 
 Delete micro BOSH
-  stopping agent services (00:00:01)
+  stopping agent services (00:00:02)
   unmount disk (00:00:07)
-  detach disk (00:00:11)
-  delete disk (00:00:40)
-  delete VM (00:00:15)
-  preserving stemcell (00:00:00)
-Done             6/6 00:01:16
-Deleted deployment 'microbosh-openstack', took 00:01:16 to complete
+  detach disk (00:00:09)
+  delete disk (00:00:39)
+  delete VM (00:00:13)
+  delete stemcell (00:00:02)
+Done             6/6 00:01:15
+Deleted deployment 'microbosh-openstack', took 00:01:15 to complete
 ```
