@@ -10,6 +10,7 @@ logging:
 
 network:
   type: dynamic
+  vip: IPADDRESS
 
 resources:
   persistent_disk: 4096
@@ -27,7 +28,13 @@ cloud:
       default_key_name: inception
       default_security_groups: ["default"]
       private_key: /home/vcap/.ssh/inception.pem
-    registry:
-      endpoint: http://admin:admin@localhost:25889
-      user: admin
-      password: admin
+
+apply_spec:
+  agent:
+    blobstore:
+      address: IPADDRESS
+    nats:
+      address: IPADDRESS
+  properties:
+    openstack_registry:
+      address: IPADDRESS

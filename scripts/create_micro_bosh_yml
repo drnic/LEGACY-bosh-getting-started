@@ -5,7 +5,7 @@ require "fileutils"
 def usage
   $stderr.puts "USAGE:"
   $stderr.puts "  For AWS: create_micro_bosh_yml NAME aws ACCESS_KEY SECRET_KEY REGION KEYNAME IP_ADDRESS RAW_PASSWORD"
-  $stderr.puts "  For OpenStack: create_micro_bosh_yml NAME openstack NAME OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL KEYNAME RAW_PASSWORD"
+  $stderr.puts "  For OpenStack: create_micro_bosh_yml NAME openstack NAME OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL KEYNAME IP_ADDRESS RAW_PASSWORD"
   exit 1
 end
 
@@ -26,6 +26,7 @@ case provider.upcase
     os_tenant_name = ARGV.shift
     os_auth_url    = ARGV.shift
     keypair_name   = ARGV.shift
+    ipaddress      = ARGV.shift
     password       = ARGV.shift
   else usage
 end
@@ -90,7 +91,13 @@ cloud:
 YAML
 end
 
-def openstack_config_yml(name, username, api_key, tenant, auth_url, key_name, salted_password, options={})
+def openstack_config_yml(name, username, api_key, tenant, auth_url, key_name, ipaddress, salted_password, options={})
+
+  # sanity checks
+  raise "Something went wrong. This is not a salted password: " +
+        "#{salted_password}" unless salted_password.start_with?("$")
+  require 'ipaddr'
+  IPAddr.new ipaddress
 
   security_group  = options[:security_group] || 'default'
   instance_type   = options[:instance_type] || 'm1.small'
@@ -108,6 +115,7 @@ logging:
 
 network:
   type: dynamic
+  vip: #{ipaddress}
 
 resources:
   persistent_disk: #{persistent_disk}
@@ -125,10 +133,16 @@ cloud:
       default_key_name: #{key_name}
       default_security_groups: ["#{security_group}"]
       private_key: /home/vcap/.ssh/#{key_name}.pem
-    registry:
-      endpoint: http://admin:admin@localhost:25889
-      user: admin
-      password: admin
+
+apply_spec:
+  agent:
+    blobstore:
+      address: #{ipaddress}
+    nats:
+      address: #{ipaddress}
+  properties:
+    openstack_registry:
+      address: #{ipaddress}
 YAML
 end
 
@@ -138,7 +152,7 @@ yml = case provider.upcase
   when "AWS"
     aws_config_yml(name, access_key, secret_key, region, keypair_name, ipaddress, salty, options={})
   when "OPENSTACK"
-    openstack_config_yml(name, os_username, os_password, os_tenant_name, os_auth_url, keypair_name, salty, options={})
+    openstack_config_yml(name, os_username, os_password, os_tenant_name, os_auth_url, keypair_name, ipaddress, salty, options={})
   else usage
 end
 

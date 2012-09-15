@@ -188,6 +188,19 @@ $ find . -name micro_bosh.yml
 
 For this tutorial, we will do option 2 and host the BOSH deployments within the same account that they will be managing. We will use the same OpenStack credentials used to create the first Ubuntu VM.
 
+On your local machine using fog, provision a floating IP in the target infrastructure:
+
+``` ruby
+>> openstack = Fog::Compute.new(:provider => "OpenStack")
+>> address = openstack.addresses.create
+>> address.ip
+"1.2.3.4"
+```
+
+The "1.2.3.4" value will replace `IPADDRESS` in the `micro_bosh.yml` below.
+
+Back to the Inception VM...
+
 Create an OpenStack keypair and store the `.pem` file. Inside the Inception VM:
 
 ```
@@ -197,7 +210,7 @@ chmod 755 /tmp/create_keypair
 
 curl https://raw.github.com/drnic/bosh-getting-started/master/scripts/create_micro_bosh_yml > /tmp/create_micro_bosh_yml
 chmod 755 /tmp/create_micro_bosh_yml
-/tmp/create_micro_bosh_yml microbosh-openstack openstack OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL inception PASSWORD
+/tmp/create_micro_bosh_yml microbosh-openstack openstack OS_USERNAME OS_PASSWORD OS_TENANT_NAME OS_AUTH_URL inception IP_ADDRESS PASSWORD
 ```
 
 This will create a file `microbosh-openstack/micro_bosh.yml` that looks as below with the ALLCAPS values filled in. `PASSWORD` above (e.g. 'abc123') will be replaced by the salted version.
@@ -215,6 +228,7 @@ logging:
 
 network:
   type: dynamic
+  vip: IPADDRESS
 
 resources:
   persistent_disk: 4096
@@ -232,10 +246,16 @@ cloud:
       default_key_name: inception
       default_security_groups: ["default"]
       private_key: /home/vcap/.ssh/inception.pem
-    registry:
-      endpoint: http://admin:admin@localhost:25889
-      user: admin
-      password: admin
+
+apply_spec:
+  agent:
+    blobstore:
+      address: IPADDRESS
+    nats:
+      address: IPADDRESS
+  properties:
+    openstack_registry:
+      address: IPADDRESS
 ```
 
 ## Custom Stemcell
@@ -336,7 +356,7 @@ Deploy Micro BOSH
   starting agent services (00:00:00)
   waiting for the director (00:02:21)
 Done             11/11 00:44:30
-WARNING! Your target has been changed to `http://10.0.0.3:25555'!
+WARNING! Your target has been changed to `http://1.2.3.4:25555'!
 Deployment set to '/var/vcap/deployments/microbosh-openstack/micro_bosh.yml'
 Deployed `microbosh-openstack/micro_bosh.yml' to `http://microbosh-openstack:25555', took 00:44:30 to complete
 ```
@@ -346,8 +366,8 @@ NOTE: To run the `bosh micro deployment microbosh-openstack` command you must be
 We can now connect to our BOSH!
 
 ```
-$ bosh target http://10.0.0.3
-Target set to `microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)'
+$ bosh target http://1.2.3.4
+Target set to `microbosh-openstack (http://1.2.3.4:25555) Ver: 0.6 (release:ce0274ec bosh:0d9ac4d4)'
 Your username: admin
 Enter password: *****
 Logged in as `admin'
@@ -361,7 +381,7 @@ If you ask your BOSH a few questions it will tell you the following:
 $ bosh status
 Updating director data... done
 
-Target         microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)
+Target         microbosh-openstack (http://1.2.3.4:25555) Ver: 0.6 (release:ce0274ec bosh:0d9ac4d4)
 UUID           8d40adaf-2ebd-4a52-b654-deaffa088b02
 User           admin
 Deployment     not set
@@ -395,7 +415,7 @@ VM CID         4f466ada-b895-49ec-9ddc-19a000ff1abe
 Disk CID       4
 Micro BOSH CID bm-0a16e407-6a06-464a-a2c2-55bcc0b8d42b
 Deployment     /var/vcap/deployments/microbosh-openstack/micro_bosh.yml
-Target         microbosh-openstack (http://10.0.0.3:25555) Ver: 0.5.2 (release:d0842944 bosh:93f05e35)
+Target         microbosh-openstack (http://1.2.3.4:25555) Ver: 0.6 (release:ce0274ec bosh:0d9ac4d4)
 ```
 
 ### Listing Deployments
