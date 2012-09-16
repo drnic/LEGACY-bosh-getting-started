@@ -281,22 +281,13 @@ Release manifest: /var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.yml
 Release tarball (95.2M): /var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.tgz
 ```
 
-### Create manifest
-
-Now you need to create the micro BOSH manifest file, call it `openstack_micro.yml`:
-
-```
-cd /var/vcap/manifests
-curl https://raw.github.com/drnic/bosh-getting-started/master/examples/microbosh-openstack/openstack_micro.yml > openstack_micro.yml
-```
-
 ### Build micro BOSH stemcell
 
 Now you have all the pieces to assemble the micro BOSH OpenStack stemcell:
 
 ```
 cd /var/vcap/bootstrap/bosh/agent
-rake stemcell2:micro["openstack",/var/vcap/manifests/openstack_micro.yml,/var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.tgz]
+rake stemcell2:micro["openstack",/var/vcap/releases/bosh-release/micro/openstack.yml,/var/vcap/releases/bosh-release/dev_releases/bosh-x.y-dev.tgz]
 ```
 
 This outputs:
