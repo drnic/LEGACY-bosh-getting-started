@@ -115,6 +115,7 @@ logging:
 
 network:
   type: dynamic
+  label: private
   vip: #{ipaddress}
 
 resources:

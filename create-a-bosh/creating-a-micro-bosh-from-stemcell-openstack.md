@@ -41,11 +41,6 @@ If you have access to a unused baremetal server, you can build a complete OpenSt
 * [DevStack](http://devstack.org/)
 * [hastexo! tutorial](http://www.hastexo.com/resources/docs/installing-openstack-essex-20121-ubuntu-1204-precise-pangolin)
 
-When you install OpenStack, there are 2 important requirements you must fulfill:
-
-* Be sure your flavors include ephemeral disk space
-* The network name for your VMs must be "private" and/or "public"
-
 Once you've installed and tested your OpenStack box, you'll need to [upload](http://docs.openstack.org/developer/glance/glance.html#examples-of-uploading-different-kinds-of-images) an [Ubuntu 10.04 LTS 64-bit image](http://uec-images.ubuntu.com/lucid/current/) before proceeding with the next steps.
 
 ## Create the Inception VM
@@ -228,6 +223,7 @@ logging:
 
 network:
   type: dynamic
+  label: private
   vip: IPADDRESS
 
 resources:
@@ -257,6 +253,10 @@ apply_spec:
     openstack_registry:
       address: IPADDRESS
 ```
+
+NOTE: Be sure the selected instance_type (flavor in OpenStack) include ephemeral disk space.
+
+NOTE: If your OpenStack network is not labeled `private` (the network name for your VMs), change manually the network section at the above file with the appropriate network label.
 
 ## Custom Stemcell
 

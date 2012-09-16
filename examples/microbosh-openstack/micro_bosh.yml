@@ -10,6 +10,7 @@ logging:
 
 network:
   type: dynamic
+  label: private
   vip: IPADDRESS
 
 resources:
