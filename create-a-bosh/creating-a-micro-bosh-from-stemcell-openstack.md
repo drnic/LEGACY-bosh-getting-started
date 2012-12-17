@@ -249,9 +249,7 @@ apply_spec:
       address: IPADDRESS
     nats:
       address: IPADDRESS
-  properties:
-    openstack_registry:
-      address: IPADDRESS
+  properties: {}
 ```
 
 NOTE: Be sure the selected instance_type (flavor in OpenStack) include ephemeral disk space.

@@ -36,6 +36,4 @@ apply_spec:
       address: IPADDRESS
     nats:
       address: IPADDRESS
-  properties:
-    openstack_registry:
-      address: IPADDRESS
+  properties: {}
