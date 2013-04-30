@@ -45,7 +45,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install build-essential libsqlite3-dev curl rsync git-core \
 libmysqlclient-dev libxml2-dev libxslt-dev libpq-dev genisoimage mkpasswd \
-debootstrap kpartx qemu -y
+libreadline6-dev libyaml-dev sqlite3 autoconf libgdbm-dev libncurses5-dev \
+automake libtool bison pkg-config libffi-dev debootstrap kpartx qemu -y
 
 echo "install: --no-ri --no-rdoc" > /etc/gemrc
 echo "update: --no-ri --no-rdoc" >> /etc/gemrc
@@ -61,6 +62,7 @@ rvm 1.9.3
 rvm alias create default 1.9.3
 gem install bundler --no-ri --no-rdoc
 gem pristine rake
+gem install blobstore_client --version '=0.4.0'
 gem install fog --no-ri --no-rdoc
 
 mkdir -p ${bosh_app_dir}/bootstrap
