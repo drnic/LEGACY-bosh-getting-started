@@ -72,9 +72,10 @@ cd ${bosh_app_dir}/bootstrap/bosh/cli/
 bundle install --without=development test
 bundle exec rake install
 
-cd ${bosh_app_dir}/bootstrap/bosh/deployer/
-bundle install --without=development test
-bundle exec rake install
+#cd ${bosh_app_dir}/bootstrap/bosh/deployer/
+#bundle install --without=development test
+#bundle exec rake install
+gem install bosh_deployer --no-ri --no-rdoc
 
 cd ${bosh_app_dir}/bootstrap/bosh/agent/
 bundle install --without=development test
